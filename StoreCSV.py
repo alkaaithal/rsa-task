@@ -2,6 +2,9 @@ import pymongo
 from pymongo import MongoClient
 import pandas as pd
 import glob
+from bson.objectid import ObjectId
+
+company_id = ObjectId()
 
 client = MongoClient('localhost', 27017)
 db = client.nse
@@ -14,11 +17,28 @@ for filename in all_files:
     li.append(df)
     frame = pd.concat(li, axis=0, ignore_index=True)
     records_ = df.to_dict(orient='records')
-    results = db.stocks.insert_many(records_)
+    for i in records_:
+        x = db.company_info.insert_one({"symbol": i['SYMBOL'], "series": i[' SERIES'], "_id": company_id})
+        db.stock_info.insert_one({"company_id": company_id, "date1": i[' DATE1'], "prev_close": i[' PREV_CLOSE'], "open_price": i[' OPEN_PRICE'], "high_price": i[' HIGH_PRICE'], "low_price": i[' LOW_PRICE'], "last_price": i[' LAST_PRICE'], "close_price": i[' CLOSE_PRICE'], "avg_price": i[' AVG_PRICE']})
+        #print(x.inserted_id)
+    #db.create_collection("company_info")
+    #results = db.company_info.insert_many(records_)
+
+    #print(i[' SERIES'])
 
 
-
-
+    #lookup usage
+db.company_info.aggregate([
+    {
+        "$lookup":
+            {
+                "from": "stock_info",
+                "localField": "role_id",
+                "foreignField": "_id",
+                "as": "stock_info"
+            }
+    }
+])
 """ for i in records_:
 
     db.create_collection(i['SYMBOL'])
