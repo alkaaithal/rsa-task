@@ -1,6 +1,8 @@
 import pandas as pd
 import glob
 from dbconnection import dbconnect
+import shutil
+
 
 db = dbconnect()
 
@@ -8,6 +10,7 @@ path = r'C:\Users\aithaa\Documents\nse'
 all_files = glob.glob(path + "/*.csv")
 
 
+#function to insert data on stock_info collection
 def insert_data_bulk(data_list):
     try:
         db.stock_info.insert_many(data_list)
@@ -15,7 +18,10 @@ def insert_data_bulk(data_list):
         print(e.with_traceback())
 
 
+#function to process data
 def process_stock_data(file_name):
+
+    dest = "C:/Users/aithaa/Documents/tempo/"
     df = pd.read_csv(file_name, index_col=None, header=0)
     data_list = []
     for index, row in df.iterrows():
@@ -49,10 +55,12 @@ def process_stock_data(file_name):
             print(e)
 
     insert_data_bulk(data_list)
+    shutil.move(file_name, dest)
 
 
 print("Inserting is done")
 
 
+#iterate through all csv files
 for file_name in all_files:
     process_stock_data(file_name)
